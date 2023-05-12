@@ -1,10 +1,9 @@
 #include <iostream>
 #include <cstdlib>
-#include <chrono>
+#include <ctime>
 #include <omp.h>
 
 using namespace std;
-using namespace std::chrono;
 
 void quick_sort(int arr[], int start, int end) {
     if (start >= end) {
@@ -26,34 +25,32 @@ void quick_sort(int arr[], int start, int end) {
             right--;
         }
     }
-    #pragma omp parallel sections
-    {
-        #pragma omp section
-        quick_sort(arr, start, right);
+    #pragma omp task
+    quick_sort(arr, start, right);
 
-        #pragma omp section
-        quick_sort(arr, left, end);
-    }
+    #pragma omp task
+    quick_sort(arr, left, end);
 }
 
 int main() {
     srand(time(NULL));
-    int n = 10000;
+    int n = 10000; // Increased problem size
     int arr[n];
     for (int i = 0; i < n; i++) {
         arr[i] = rand() % 1000;
     }
 
-    high_resolution_clock::time_point start_time = high_resolution_clock::now();
+    double start_time = omp_get_wtime(); // Using OpenMP timer
     #pragma omp parallel
     {
         #pragma omp single
         quick_sort(arr, 0, n-1);
     }
-    high_resolution_clock::time_point end_time = high_resolution_clock::now();
-    auto execution_time = duration_cast<microseconds>(end_time - start_time).count();
+    double end_time = omp_get_wtime();
+    double execution_time = end_time - start_time;
+    double execution_time_micro = execution_time * 1000000;
 
-    cout << "Execution time: " << execution_time << " microseconds" << endl;
+    cout << "Execution time: " << execution_time_micro << " microseconds" << endl;
 
     return 0;
 }
